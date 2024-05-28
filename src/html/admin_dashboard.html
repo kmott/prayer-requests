@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 1200px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        .prayer-request {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            background: #007BFF;
+            color: white;
+        }
+        button {
+            background: #007BFF;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #notification {
+            display: none;
+            margin-top: 20px;
+            padding: 10px;
+            background: #28a745;
+            color: white;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+        <div id="prayerRequests"></div>
+        <button id="toggleSubmissionButton">Disable Submissions</button>
+        <button id="resetRequestsButton">Reset Requests</button>
+        <div id="notification">Prayer requests have been reset.</div>
+    </div>
+
+    <script>
+        async function fetchPrayerRequests() {
+            const response = await fetch('/prayer-requests');
+            const data = await response.json();
+            const prayerRequestsContainer = document.getElementById('prayerRequests');
+            prayerRequestsContainer.innerHTML = '';
+
+            data.prayerRequests.forEach(request => {
+                const prayerRequestDiv = document.createElement('div');
+                prayerRequestDiv.className = 'prayer-request';
+                prayerRequestDiv.textContent = request;
+                prayerRequestsContainer.appendChild(prayerRequestDiv);
+            });
+        }
+
+        async function toggleSubmissions() {
+            const response = await fetch('/toggle-submissions', {
+                method: 'POST'
+            });
+            const result = await response.json();
+            const button = document.getElementById('toggleSubmissionButton');
+            button.textContent = result.submissionsEnabled ? 'Disable Submissions' : 'Enable Submissions';
+        }
+
+        async function resetRequests() {
+            const response = await fetch('/reset-requests', {
+                method: 'POST'
+            });
+            const result = await response.json();
+            if (result.success) {
+                const prayerRequestsContainer = document.getElementById('prayerRequests');
+                prayerRequestsContainer.innerHTML = '';
+                showNotification();
+            }
+        }
+
+        function showNotification() {
+            const notification = document.getElementById('notification');
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000); // Hide notification after 3 seconds
+        }
+
+        document.getElementById('toggleSubmissionButton').addEventListener('click', toggleSubmissions);
+        document.getElementById('resetRequestsButton').addEventListener('click', resetRequests);
+
+        fetchPrayerRequests();
+    </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "app-test",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack",
+    "localdev": "node src/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "ws": "^8.17.0"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "^12.0.2",
+    "webpack": "^5.91.0",
+    "webpack-cli": "^5.1.4"
+  }
+}

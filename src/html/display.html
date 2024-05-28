@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display Prayer Requests</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 1200px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            font-size: 2em; /* Increase the font size of the title */
+        }
+        .prayer-request {
+            font-size: 3em; /* Make the text really big */
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 4px;
+            background: #007BFF;
+            color: white;
+        }
+        .no-requests {
+            font-size: 2em; /* Make the text big for no requests message */
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Prayer Requests</h1>
+        <div id="prayerRequests" class="no-requests">No prayer requests available.</div>
+    </div>
+
+    <script>
+        let prayerRequests = [];
+        let displayQueue = [];
+        let currentIndex = 0;
+        let displaying = false;
+
+        function displayNextPrayerRequest() {
+            const prayerRequestsContainer = document.getElementById('prayerRequests');
+            prayerRequestsContainer.innerHTML = '';
+
+            if (displayQueue.length === 0) {
+                prayerRequestsContainer.classList.add('no-requests');
+                prayerRequestsContainer.textContent = 'No prayer requests available.';
+                displaying = false;
+                return;
+            }
+
+            prayerRequestsContainer.classList.remove('no-requests');
+
+            const prayerRequestDiv = document.createElement('div');
+            prayerRequestDiv.className = 'prayer-request';
+            prayerRequestDiv.textContent = displayQueue[currentIndex];
+            prayerRequestsContainer.appendChild(prayerRequestDiv);
+
+            currentIndex++;
+            if (currentIndex >= displayQueue.length) {
+                currentIndex = 0;
+            }
+
+            setTimeout(displayNextPrayerRequest, 10000); // Display next request after 10 seconds
+        }
+
+        function addNewPrayerRequest(newRequest) {
+            prayerRequests.push(newRequest);
+            displayQueue.splice(currentIndex + 1, 0, newRequest);
+        }
+
+        function resetPrayerRequests() {
+            prayerRequests = [];
+            displayQueue = [];
+            currentIndex = 0;
+            displaying = false;
+            const prayerRequestsContainer = document.getElementById('prayerRequests');
+            prayerRequestsContainer.innerHTML = '';
+            prayerRequestsContainer.classList.add('no-requests');
+            prayerRequestsContainer.textContent = 'No prayer requests available.';
+        }
+
+        function setupWebSocket() {
+            const socket = new WebSocket(`wss://${window.location.host}`);
+
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                if (data.reset) {
+                    resetPrayerRequests();
+                } else if (data.prayerRequests.length > prayerRequests.length) {
+                    addNewPrayerRequest(data.prayerRequests[data.prayerRequests.length - 1]);
+                    startDisplayingPrayerRequests();
+                }
+            };
+
+            socket.onopen = function() {
+                console.log('WebSocket connection established');
+            };
+
+            socket.onclose = function() {
+                console.log('WebSocket connection closed');
+            };
+
+            socket.onerror = function(error) {
+                console.error('WebSocket error:', error);
+            };
+        }
+
+        function startDisplayingPrayerRequests() {
+            if (!displaying && displayQueue.length > 0) {
+                displaying = true;
+                displayNextPrayerRequest();
+            }
+        }
+
+        setupWebSocket();
+        setTimeout(displayNextPrayerRequest, 10000); // Start displaying after 10 seconds
+    </script>
+</body>
+</html>

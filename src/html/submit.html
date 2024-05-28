@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Prayer Request</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 400px;
+            margin-bottom: 20px;
+        }
+        .prayer-requests-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        label, input, button {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #007BFF;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .prayer-request {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            background: #f1f1f1;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Submit Your Prayer Request</h1>
+        <form id="prayerForm">
+            <label for="prayerInput">Enter Your Prayer Request:</label>
+            <input type="text" id="prayerInput" name="prayerInput" required>
+            <button type="submit" id="submitButton">Submit</button>
+        </form>
+    </div>
+
+    <div class="prayer-requests-container">
+        <h1>Prayer Requests</h1>
+        <div id="allPrayerRequests"></div>
+    </div>
+
+    <script>
+        let prayerRequests = [];
+        const allPrayerRequests = document.getElementById('allPrayerRequests');
+        const submitButton = document.getElementById('submitButton');
+
+        document.getElementById('prayerForm').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevent default form submission
+            const prayerInput = document.getElementById('prayerInput').value.trim();
+            if (prayerInput === "") return; // Ignore empty submissions
+
+            // Send the prayer request to the server
+            await fetch('/submit-prayer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ prayer: prayerInput })
+            });
+
+            // Clear the input field
+            document.getElementById('prayerInput').value = "";
+        });
+
+        // Submit form on Enter key press
+        document.getElementById('prayerInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                document.getElementById('prayerForm').dispatchEvent(new Event('submit'));
+            }
+        });
+
+        function setupWebSocket() {
+            const socket = new WebSocket(`wss://${window.location.host}`);
+
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                if (data.reset) {
+                    resetPrayerRequests();
+                } else if (data.prayerRequests) {
+                    prayerRequests = data.prayerRequests;
+                    updatePrayerRequests();
+                } else if (data.submissionsEnabled !== undefined) {
+                    updateSubmitButton(data.submissionsEnabled);
+                }
+            };
+
+            socket.onopen = function() {
+                console.log('WebSocket connection established');
+            };
+
+            socket.onclose = function() {
+                console.log('WebSocket connection closed');
+            };
+
+            socket.onerror = function(error) {
+                console.error('WebSocket error:', error);
+            };
+        }
+
+        function resetPrayerRequests() {
+            prayerRequests = [];
+            updatePrayerRequests();
+        }
+
+        function updatePrayerRequests() {
+            allPrayerRequests.innerHTML = ''; // Clear current list
+            prayerRequests.forEach(request => {
+                const prayerRequestDiv = document.createElement('div');
+                prayerRequestDiv.className = 'prayer-request';
+                prayerRequestDiv.textContent = request;
+                allPrayerRequests.appendChild(prayerRequestDiv);
+            });
+        }
+
+        function updateSubmitButton(submissionsEnabled) {
+            if (submissionsEnabled) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Submit';
+            } else {
+                submitButton.disabled = true;
+                submitButton.textContent = 'Submissions Locked';
+            }
+        }
+
+        setupWebSocket();
+    </script>
+</body>
+</html>
