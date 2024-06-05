@@ -64,7 +64,11 @@ job "prayer-requests" {
         tags = [
           "prayer-requests",
           "urlprefix-prayer-requests.klm.us-west.mywordpress.io/",
-          "urlprefix-prayer-requests.klm.us-west.mywordpress.io:80/ redirect=301,https://prayer-requests.klm.us-west.mywordpress.io$path"
+          "urlprefix-prayer-requests.klm.us-west.mywordpress.io:80/ redirect=301,https://prayer-requests.klm.us-west.mywordpress.io$path",
+          "urlprefix-seekandpray.com/",
+          "urlprefix-seekandpray.com:80/ redirect=301,https://seekandpray.com$path",
+          "urlprefix-www.seekandpray.com/ redirect=301,https://seekandpray.com$path",
+          "urlprefix-www.seekandpray.com:80/ redirect=301,https://seekandpray.com$path"
         ]
 
         check {
